@@ -189,7 +189,7 @@ class Parser:
 			self.check(ord('='))
 			self.relational_expression()
 			self.extended_equality_expression()
-		elif self.token.tag == Tag.NE:
+		elif self.token.tag == Tag.NEQ:
 			self.check(Tag.NEQ)
 			self.relational_expression()
 			self.extended_equality_expression()
