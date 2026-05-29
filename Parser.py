@@ -180,21 +180,66 @@ class Parser:
 			pass
 	
 	#<equality-expression> ::= <relational-expression> <extended-equality-expression>
+	def equality_expression(self):
+		if self.token.tag in self.firstAdditiveExpression:
+			self.relational_expression()
+			self.extended_equality_expression()
+		else:
+			self.error("expected an additive expression before " + str(self.token))
 	
 	#<extended-conditional-term> ::= AND <equality-expression> <extended-conditional-term>
 	#<extended-boolean-term> ::= ' '
+	def extended_conditional_term(self):
+		if self.token.tag == Tag.AND:
+			self.check(Tag.AND)
+			self.equality_expression()
+			self.extended_conditional_term()
+		else:
+			pass
 
 	#<conditional-term> ::= <equality-expression> <extended-conditional-term>
+	def conditional_term(self):
+		if self.token.tag in self.firstAdditiveExpression:
+			self.equality_expression()
+			self.extended_conditional_term()
+		else:
+			self.error("expected an additive expression before " + str(self.token))
 	
 	#<extended-conditional-expression> ::= OR <conditional-term> <extended-conditional-expression>
 	#<extended-conditional-expression> ::= ' '
+	def extended_conditional_expression(self):
+		if self.token.tag == Tag.OR:
+			self.check(Tag.OR)
+			self.conditional_term()
+			self.extended_conditional_expression()
+		else:
+			pass
 
 	#<conditional-expression> ::= <conditional-term> <extended-conditional-expression>
+	def conditional_expression(self):
+		if self.token.tag in self.firstAdditiveExpression:
+			self.conditional_term()
+			self.extended_conditional_expression()
+		else:
+			self.error("expected an additive expression before " + str(self.token))
 	
 	#<expression> ::= <conditional-expression>
+	def expression(self):
+		if self.token.tag in self.firstAdditiveExpression:
+			self.condional_expression()
+		else:
+			self.error("expected an additive expression before " + str(self.token))
 	
 	#<text-statement> ::= PRINT '(' <expression> )'
-	
+	def text_statement(self):
+		if self.token.tag == Tag.PRINT:
+			self.check(Tag.PRINT)
+			self.check(ord('('))
+			self.expression()
+			self.check(ord(')'))
+		else:
+			self.error("expected PRINT before " + str(self.token))
+
 	#<assigment-statement> ::= <identifier> ':''=' <expression>
 	
 	#<statement> ::= <assignment-statement> | <text-statement>
