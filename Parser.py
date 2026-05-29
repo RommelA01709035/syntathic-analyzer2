@@ -15,6 +15,23 @@ class Parser:
 		self.firstMultiplicativeExpression = self.firstUnaryExpression
 		self.firstExtendedAdditiveExpression = set((ord('+'), ord('-')))
 		self.firstAdditiveExpression = self.firstMultiplicativeExpression
+		self.firstExtendedRelationalExpression = set((ord('<'), Tag.LEQ, ord('>'), Tag.GEQ))
+		self.firstRelationalExpression = self.firstAdditiveExpression
+		self.firstExtendedEqualityExpression = set((ord('='), Tag.NEQ))
+		self.firstEqualityExpression = self.firstRelationalExpression
+		self.firstExtendedConditionalTerm = set({Tag.AND})
+		self.firstConditionalTerm = self.firstEqualityExpression
+		self.firstExtendedConditionalExpression = set({Tag.OR})
+		self.firstConditionalExpression = self.firstConditionalTerm
+		self.firstExpression = self.firstConditionalExpression
+		self.firstTextStatement = set({Tag.PRINT})
+		self.firstAssigmentStatement = set({Tag.ID})
+		self.firstStatement = self.firstAssigmentStatement.union(self.firstTextStatement)
+		self.firstStatementSequence = self.firstStatement
+		self.firstIdentifierList = set({ord(',')})
+		self.firstDeclarationSequence = set({Tag.VAR})
+		self.firstProgram = self.firstDeclarationSequence
+
 
 	def error(self, extra = None):
 		text = 'Line ' + str(self.lex.line) + " - " 
@@ -141,16 +158,16 @@ class Parser:
 			self.check(ord('<'))
 			self.additive_expression()
 			self.extended_relational_expression()
-		elif self.token.tag == Tag.LE:
-			self.check(Tag.LE)
+		elif self.token.tag == Tag.LEQ:
+			self.check(Tag.LEQ)
 			self.additive_expression()
 			self.extended_relational_expression()
 		elif self.token.tag == ord('>'):
 			self.check(ord('>'))
 			self.additive_expression()
 			self.extended_relational_expression()
-		elif self.token.tag == Tag.GE:
-			self.check(Tag.GE)
+		elif self.token.tag == Tag.GEQ:
+			self.check(Tag.GEQ)
 			self.additive_expression()
 			self.extended_relational_expression()
 		else:
@@ -226,7 +243,7 @@ class Parser:
 	#<expression> ::= <conditional-expression>
 	def expression(self):
 		if self.token.tag in self.firstAdditiveExpression:
-			self.condional_expression()
+			self.conditional_expression()
 		else:
 			self.error("expected an additive expression before " + str(self.token))
 	
@@ -241,16 +258,50 @@ class Parser:
 			self.error("expected PRINT before " + str(self.token))
 
 	#<assigment-statement> ::= <identifier> ':''=' <expression>
-	
+	def assignment_statement(self):
+		if self.token.tag == Tag.ID:
+			self.check(Tag.ID)
+			self.check(Tag.ASSIGN)
+			self.expression()
+		else:
+			self.error("expected an identifier before " + str(self.token))
+
 	#<statement> ::= <assignment-statement> | <text-statement>
+	def statement(self):
+		if self.token.tag == Tag.ID:
+			self.assignment_statement()
+		elif self.token.tag == Tag.PRINT:
+			self.text_statement()
+		else:
+			self.error("expected an statement before " + str(self.token))
 	
 	#<statement-sequence> ::= <statement> <statement-sequence>
 	#<statement-sequence> ::= ' '
+	def statementSequence(self):
+		if self.token.tag in (Tag.ID, Tag.PRINT):
+			self.statement()
+			self.statementSequence()
+		else:
+			pass
 	
 	#<identifier-list> ::= ',' <identifier> <identifier-list>
 	#<identifier-list> ::= ' '
+	def identifierList(self):
+		if self.token.tag == ord(','):
+			self.check(ord(','))
+			self.check(Tag.ID)
+			self.identifierList()
+		else:
+			pass
 	
 	#<declaration-sequence> ::= VAR <identifier> <identifier-list>
+	def declarationSequence(self):
+		if self.token.tag == Tag.VAR:
+			self.check(Tag.VAR)
+			self.check(Tag.ID)
+			self.identifierList()
+		else:
+			self.error("expected VAR before " + str(self.token))
 	
 	#<program> ::= <declaration-sequence> <statement-sequence>
 	def program(self):
